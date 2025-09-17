@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dota 2 Tournament Simulator</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+<button id="helpButton" class="help-button">?</button>
+    <div class="container">
+
+    <img src="/static/aegis.png" height="120px" class="center">
+        <h1>🏆 Dota 2 Tournament Simulator 🏆</h1>
+        <h4>by <a href="https://github.com/lesaf92">lesaf</a></h4>
+        <div class="controls">
+            <button id="simulate-btn">Run Simulation</button>
+            <p id="error-message"></p>
+        </div>
+        <div id="champion-display" class="champion-box"></div>
+
+        <div class="bracket">
+            <div class="round">
+                <h3>Upper Bracket R1</h3>
+                {% for i in range(4) %}
+                <div class="match-box" id="ub_r1_m{{ i }}">
+                    <select class="team-select">
+                        <option value="">-- Select Team --</option>
+                        {% for team in team_list %}<option value="{{ team }}">{{ team }}</option>{% endfor %}
+                    </select>
+                    <div class="vs-text">vs</div>
+                    <select class="team-select">
+                        <option value="">-- Select Team --</option>
+                        {% for team in team_list %}<option value="{{ team }}">{{ team }}</option>{% endfor %}
+                    </select>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="round">
+                <h3>Upper Bracket R2</h3>
+                <div class="match-box" id="ub_r2_m0"></div>
+                <div class="match-box" id="ub_r2_m1"></div>
+
+            </div>
+
+            <div class="round">
+            </div>
+
+            <div class="round">
+                <h3>Upper Bracket Final</h3>
+                <div class="match-box" id="ub_final_m0"></div>
+
+            </div>
+
+            <div class="round">
+                <h3>Grand Final</h3>
+                <div class="match-box grand-final" id="grand_final_m0"></div>
+            </div>
+        </div>
+
+        <div class="bracket">
+            <div class="round">
+                <h3 style="margin-top: 50px;">Lower Bracket R1</h3>
+                <div class="match-box" id="lb_r1_m0"></div>
+                <div class="match-box" id="lb_r1_m1"></div>
+            </div>
+            <div class="round">
+                <h3 style="margin-top: 50px;">Lower Bracket R2</h3>
+                <div class="match-box" id="lb_r2_m0"></div>
+                <div class="match-box" id="lb_r2_m1"></div>
+            </div>
+            <div class="round">
+                <h3 style="margin-top: 50px;" >Lower Bracket Semifinal</h3>
+                <div class="match-box" id="lb_semi_m0"></div>
+            </div>
+            <div class="round">
+                <h3 style="margin-top: 50px;">Lower Bracket Final</h3>
+                <div class="match-box" id="lb_final_m0"></div>
+            </div>
+
+            <div class="round">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('helpButton').addEventListener('click', function() {
+            alert(`Welcome to the Dota 2 Tournament Simulator!\n\nThis web application allows you to simulate a complete 8-team, double-elimination tournament bracket, just like the main event of a professional tournament. The predictions are not random. They are powered by a neural network that was trained on thousands of historical professional matches. The model uses multiple rating systems, including Elo and Glicko-2, to calculate the win probability for each matchup.\n\n-> How to Use It\n\nSelect Teams: Use the dropdown menus in the first column (Upper Bracket R1) to choose the 8 teams that will participate in the tournament. Please ensure you select 8 unique teams.\n\nRun Simulation: Once all 8 slots are filled with unique teams, click the Run Simulation button at the top of the page.\n\nThe entire bracket will instantly populate with the predicted outcomes and the final tournament champion will be displayed prominently at the top of the page.\n\nEnjoy simulating your dream tournament matchups!`);
+        });
+        document.getElementById('simulate-btn').addEventListener('click', async () => {
+            const selects = document.querySelectorAll('.team-select');
+            const selectedTeams = Array.from(selects).map(s => s.value);
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = ""; // Clear previous errors
+
+            if (selectedTeams.some(t => t === "")) {
+                errorMessage.textContent = "Error: Please select a team for every slot."; return;
+            }
+            if (new Set(selectedTeams).size !== selectedTeams.length) {
+                errorMessage.textContent = "Error: Please do not select duplicate teams."; return;
+            }
+
+            const response = await fetch('/simulate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ teams: selectedTeams })
+            });
+            if (!response.ok) { errorMessage.textContent = "Error: Failed to fetch simulation results."; return; }
+            const results = await response.json();
+            updateBracket(results);
+        });
+
+        function populateMatch(matchId, teams, prob, winner, loser) {
+            const matchBox = document.getElementById(matchId);
+            if (!matchBox) return;
+            const [team1, team2] = teams;
+            const prob1 = (prob * 100).toFixed(0);
+            const prob2 = ((1 - prob) * 100).toFixed(0);
+
+            matchBox.innerHTML = `
+                <div class="team-name ${winner === team1 ? 'winner' : 'loser'}">${team1} (${prob1}%)</div>
+                <div class="vs-text">vs</div>
+                <div class="team-name ${winner === team2 ? 'winner' : 'loser'}">${team2} (${prob2}%)</div>
+            `;
+        }
+
+        function updateBracket(results) {
+            // Populate every match result from the backend
+            for (const matchId in results) {
+                if (matchId.startsWith('ub_') || matchId.startsWith('lb_') || matchId.startsWith('grand_final')) {
+                    const matchData = results[matchId];
+                    populateMatch(matchId, matchData.teams, matchData.prob, matchData.winner, matchData.loser);
+                }
+            }
+
+            // Populate the next rounds with winners
+            // document.getElementById('ub_r2_m0').innerHTML = `<div class="team-name">${results.ub_r1_m0.winner}</div><div class="vs-text">vs</div><div class="team-name">${results.ub_r1_m1.winner}</div>`;
+            // document.getElementById('ub_r2_m1').innerHTML = `<div class="team-name">${results.ub_r1_m2.winner}</div><div class="vs-text">vs</div><div class="team-name">${results.ub_r1_m3.winner}</div>`;
+            // document.getElementById('lb_r1_m0').innerHTML = `<div class="team-name">${results.ub_r1_m0.loser}</div><div class="vs-text">vs</div><div class="team-name">${results.ub_r1_m1.loser}</div>`;
+            // document.getElementById('lb_r1_m1').innerHTML = `<div class="team-name">${results.ub_r1_m2.loser}</div><div class="vs-text">vs</div><div class="team-name">${results.ub_r1_m3.loser}</div>`;
+            // document.getElementById('ub_final_m0').innerHTML = `<div class="team-name">${results.ub_r2_m0.winner}</div><div class="vs-text">vs</div><div class="team-name">${results.ub_r2_m1.winner}</div>`;
+            // document.getElementById('lb_r2_m0').innerHTML = `<div class="team-name">${results.ub_r2_m0.loser}</div><div class="vs-text">vs</div><div class="team-name">${results.lb_r1_m0.winner}</div>`;
+            // document.getElementById('lb_r2_m1').innerHTML = `<div class="team-name">${results.ub_r2_m1.loser}</div><div class="vs-text">vs</div><div class="team-name">${results.lb_r1_m1.winner}</div>`;
+            // document.getElementById('lb_semi_m0').innerHTML = `<div class="team-name">${results.lb_r2_m0.winner}</div><div class="vs-text">vs</div><div class="team-name">${results.lb_r2_m1.winner}</div>`;
+            // document.getElementById('lb_final_m0').innerHTML = `<div class="team-name">${results.ub_final_m0.loser}</div><div class="vs-text">vs</div><div class="team-name">${results.lb_semi_m0.winner}</div>`;
+            // document.getElementById('grand_final_m0').innerHTML = `<div class="team-name">${results.ub_final_m0.winner}</div><div class="vs-text">vs</div><div class="team-name">${results.lb_final_m0.winner}</div>`;
+
+            // Display the champion
+            const championDisplay = document.getElementById('champion-display');
+            championDisplay.innerHTML = `<h2>Tournament Champion: <span class="winner">${results.champion}</span></h2>`;
+            championDisplay.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
