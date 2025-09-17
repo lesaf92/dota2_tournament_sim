@@ -4,7 +4,7 @@ A full-stack web application that simulates an 8-team, double-elimination Dota 2
 
 -----
 
-### \#\# Project Overview
+### Project Overview
 
 This project provides an end-to-end pipeline for predicting Dota 2 match outcomes. It includes scripts to:
 
@@ -15,7 +15,7 @@ This project provides an end-to-end pipeline for predicting Dota 2 match outcome
 
 -----
 
-### \#\# Features
+### Features
 
   - **Automated Data Pipeline**: A bash script automates the entire setup process.
   - **Historical Rating Engine**: Implements Elo (with variable K-factors) and a custom Glicko-2 engine from scratch.
@@ -25,7 +25,7 @@ This project provides an end-to-end pipeline for predicting Dota 2 match outcome
 
 -----
 
-### \#\# Understanding the Rating Systems
+### Understanding the Rating Systems
 
 A key feature of this project is its use of robust rating systems to quantify team skill. Here’s how they work.
 
@@ -54,7 +54,7 @@ In essence, Glicko-2 provides a much more nuanced view of skill by not only esti
 
 -----
 
-### \#\# Technology Stack
+### Technology Stack
 
   - **Backend**: Python, Flask
   - **Machine Learning**: PyTorch
@@ -65,7 +65,7 @@ In essence, Glicko-2 provides a much more nuanced view of skill by not only esti
 
 -----
 
-### \#\# Project Structure
+### Project Structure
 
 ```
 /
@@ -89,13 +89,13 @@ In essence, Glicko-2 provides a much more nuanced view of skill by not only esti
 
 -----
 
-### \#\# Setup and Installation
+### Setup and Installation
 
 1.  **Clone the Repository**
 
     ```bash
-    git clone <repository-url>
-    cd <repository-name>
+    git clone https://github.com/lesaf92/dota2_tournament_sim.git
+    cd dota2_tournament_sim
     ```
 
 2.  **Create a Virtual Environment**
@@ -114,7 +114,7 @@ In essence, Glicko-2 provides a much more nuanced view of skill by not only esti
 
 -----
 
-### \#\# Usage
+### Usage
 
 The project is automated with a bash script. This is the recommended way to run the pipeline.
 
@@ -140,7 +140,7 @@ The project is automated with a bash script. This is the recommended way to run 
 
 -----
 
-### \#\# Acknowledgments
+### Acknowledgments
 
   - This project relies on the fantastic and free [OpenDota API](https://docs.opendota.com/).
   - The Glicko-2 rating system was designed by Professor [Mark E. Glickman](https://www.glicko.net/glicko.html).

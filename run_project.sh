@@ -9,7 +9,8 @@
 
 # --- Configuration ---
 # Set the names of your scripts, files, and virtual environment directory.
-VENV_DIR="/home/luiz/dota2leaguesim"
+SCRIPT_PATH=$(readlink -f "$0")
+VENV_DIR=$(dirname "$SCRIPT_PATH")
 
 TEAMS_SCRIPT="teams.py"
 DATA_GEN_SCRIPT="data_generator.py"  # Assumes your multi-rating script is named this
